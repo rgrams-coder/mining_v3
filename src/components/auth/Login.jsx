@@ -22,13 +22,20 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
 
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
+
     try {
       setError('');
       setLoading(true);
-      await login(email, password);
-      navigate('/');
+      const result = await login(email, password);
+      if (result.success) {
+        navigate('/');
+      }
     } catch (err) {
-      setError('Failed to sign in');
+      setError(err.message || 'Failed to sign in');
     } finally {
       setLoading(false);
     }

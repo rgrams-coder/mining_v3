@@ -51,7 +51,7 @@ function Navbar() {
               textDecoration: 'none',
             }}
           >
-            Mining Consultancy
+            Centre for Mines and Minerals Law Research
           </Typography>
 
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>

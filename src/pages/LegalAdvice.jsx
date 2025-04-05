@@ -1,4 +1,5 @@
-import { Container, Typography, Grid, Card, CardContent, Avatar, TextField, Button, Box } from '@mui/material';
+import { Container, Typography, Grid, Card, CardContent, Avatar, TextField, Button, Box, Alert, CircularProgress } from '@mui/material';
+import { useState } from 'react';
 
 const experts = [
   {
@@ -22,9 +23,77 @@ const experts = [
 ];
 
 function LegalAdvice() {
-  const handleSubmit = (event) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    description: ''
+  });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
+      newErrors.email = 'Invalid email address';
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone is required';
+    } else if (!/^[\d\s-+()]{10,}$/.test(formData.phone)) {
+      newErrors.phone = 'Invalid phone number';
+    }
+    if (!formData.description.trim()) newErrors.description = 'Description is required';
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Handle form submission logic here
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      // Simulate API call with timeout
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // TODO: Replace with actual API call
+      // const response = await fetch('/api/legal-consultation', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(formData)
+      // });
+      // if (!response.ok) throw new Error('Submission failed');
+
+      setSubmitStatus('success');
+      setFormData({ name: '', email: '', phone: '', description: '' });
+    } catch (error) {
+      setSubmitStatus('error');
+      console.error('Submission error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -89,39 +158,70 @@ function LegalAdvice() {
               <TextField
                 fullWidth
                 label="Name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
                 margin="normal"
                 required
+                error={!!errors.name}
+                helperText={errors.name}
               />
               <TextField
                 fullWidth
                 label="Email"
+                name="email"
                 type="email"
+                value={formData.email}
+                onChange={handleChange}
                 margin="normal"
                 required
+                error={!!errors.email}
+                helperText={errors.email}
               />
               <TextField
                 fullWidth
                 label="Phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
                 margin="normal"
                 required
+                error={!!errors.phone}
+                helperText={errors.phone}
               />
               <TextField
                 fullWidth
                 label="Legal Matter Description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
                 multiline
                 rows={4}
                 margin="normal"
                 required
+                error={!!errors.description}
+                helperText={errors.description}
               />
+              {submitStatus === 'success' && (
+                <Alert severity="success" sx={{ mt: 2 }}>
+                  Your consultation request has been submitted successfully!
+                </Alert>
+              )}
+              {submitStatus === 'error' && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  Failed to submit request. Please try again.
+                </Alert>
+              )}
               <Button
                 type="submit"
                 variant="contained"
                 color="primary"
                 size="large"
                 fullWidth
+                disabled={isSubmitting}
                 sx={{ mt: 3 }}
               >
-                Request Consultation
+                {isSubmitting ? <CircularProgress size={24} /> : 'Request Consultation'}
               </Button>
             </Box>
           </Card>

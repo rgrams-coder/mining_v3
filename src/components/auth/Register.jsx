@@ -27,7 +27,16 @@ export default function Register() {
     password: '',
     confirmPassword: ''
   });
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({
+    general: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    company: '',
+    password: '',
+    confirmPassword: ''
+  });
   const [loading, setLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const { signup } = useAuth();
@@ -52,44 +61,82 @@ export default function Register() {
 
   const validateForm = () => {
     if (!formData.firstName || !formData.lastName) {
-      setError('Please enter your full name');
+      setErrors(prev => ({
+        ...prev,
+        firstName: !formData.firstName ? 'First name is required' : '',
+        lastName: !formData.lastName ? 'Last name is required' : ''
+      }));
       return false;
     }
     if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
-      setError('Please enter a valid email address');
+      setErrors(prev => ({
+        ...prev,
+        email: 'Please enter a valid email address'
+      }));
       return false;
     }
     if (!formData.phone || !/^[0-9]{10}$/.test(formData.phone)) {
-      setError('Please enter a valid 10-digit phone number');
+      setErrors(prev => ({
+        ...prev,
+        phone: 'Please enter a valid 10-digit phone number'
+      }));
       return false;
     }
     if (!formData.company) {
-      setError('Please enter your company name');
+      setErrors(prev => ({
+        ...prev,
+        company: 'Please enter your company name'
+      }));
       return false;
     }
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
+      setErrors(prev => ({
+        ...prev,
+        password: 'Password must be at least 8 characters long'
+      }));
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setErrors(prev => ({
+        ...prev,
+        confirmPassword: 'Passwords do not match'
+      }));
       return false;
     }
     if (!acceptTerms) {
-      setError('Please accept the terms and conditions');
+      setErrors(prev => ({
+        ...prev,
+        general: 'Please accept the terms and conditions'
+      }));
       return false;
     }
     return true;
   };
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
+    if (!acceptTerms) {
+      setErrors(prev => ({
+        ...prev,
+        general: 'Please accept the terms and conditions'
+      }));
+      return;
+    }
+
+    setLoading(true);
+    setErrors({
+      general: '',
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      company: '',
+      password: '',
+      confirmPassword: ''
+    });
 
     try {
-      setError('');
-      setLoading(true);
       await signup(
         formData.email,
         formData.password,
@@ -99,8 +146,19 @@ export default function Register() {
         formData.company
       );
       navigate('/');
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create an account');
+    } catch (error) {
+      if (error.fieldErrors) {
+        setErrors(prev => ({
+          ...prev,
+          ...error.fieldErrors,
+          general: ''
+        }));
+      } else {
+        setErrors(prev => ({
+          ...prev,
+          general: error.message || 'Registration failed'
+        }));
+      }
     } finally {
       setLoading(false);
     }
@@ -120,7 +178,7 @@ export default function Register() {
           <Typography component="h1" variant="h5" align="center" gutterBottom>
             Sign Up
           </Typography>
-          {error && <Alert severity="error">{error}</Alert>}
+          {errors.general && <Alert severity="error">{errors.general}</Alert>}
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
@@ -131,6 +189,8 @@ export default function Register() {
                 label="First Name"
                 value={formData.firstName}
                 onChange={handleChange}
+                error={!!errors.firstName}
+                helperText={errors.firstName}
               />
               <TextField
                 margin="normal"
@@ -140,6 +200,8 @@ export default function Register() {
                 label="Last Name"
                 value={formData.lastName}
                 onChange={handleChange}
+                error={!!errors.lastName}
+                helperText={errors.lastName}
               />
             </Box>
             <TextField
@@ -152,6 +214,8 @@ export default function Register() {
               autoComplete="email"
               value={formData.email}
               onChange={handleChange}
+              error={!!errors.email}
+              helperText={errors.email}
             />
             <TextField
               margin="normal"
@@ -162,6 +226,8 @@ export default function Register() {
               type="tel"
               value={formData.phone}
               onChange={handleChange}
+              error={!!errors.phone}
+              helperText={errors.phone}
             />
             <TextField
               margin="normal"
@@ -171,6 +237,8 @@ export default function Register() {
               label="Company Name"
               value={formData.company}
               onChange={handleChange}
+              error={!!errors.company}
+              helperText={errors.company}
             />
             <TextField
               margin="normal"
@@ -182,6 +250,8 @@ export default function Register() {
               autoComplete="new-password"
               value={formData.password}
               onChange={handleChange}
+              error={!!errors.password}
+              helperText={errors.password}
             />
             {formData.password && (
               <Box sx={{ width: '100%', mb: 2 }}>
